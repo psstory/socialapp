@@ -1,43 +1,18 @@
 const functions = require('firebase-functions')
-const admin = require('firebase-admin')
-
-admin.initializeApp()
+const { getAllScreams, postOneScream } = require('./handlers/screams')
+const { signup, login } = require('./handlers/users')
+const FBAuth = require('./util/fbAuth')
 
 const express = require('express')
 const app = express()
+// same as the 2 lines above
+// const app = require('express')()
 
-app.get('/screams', (req, res) => {
-  admin
-    .firestore()
-    .collection('screams')
-    .get()
-    .then(data => {
-      let screams = []
-      data.forEach(doc => {
-        screams.push(doc.data())
-      })
-      return res.json(screams)
-    })
-    .catch(err => console.error(err))
-})
-
-app.post('/scream', (req, res) => {
-  const newScream = {
-    body: req.body.body,
-    userHandle: req.body.userHandle,
-    createdAt: admin.firestore.Timestamp.fromDate(new Date())
-  }
-  admin
-    .firestore()
-    .collection('screams')
-    .add(newScream)
-    .then(doc => {
-      res.json({ message: `document ${doc.id} successfully created.` })
-    })
-    .catch(err => {
-      res.status(500).json({ message: `document not created.` })
-      console.log(err)
-    })
-})
+//scream routes
+app.get('/screams', getAllScreams)
+app.post('/scream', FBAuth, postOneScream)
+//user routes
+app.post('/signup', signup)
+app.post('/login', login)
 
 exports.api = functions.https.onRequest(app)
